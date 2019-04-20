@@ -1,0 +1,110 @@
+class  TeacherLib:
+    URL = "http://ci.ytesting.com/api/3school/teachers"
+
+    def __init__(self):
+        self.vcode = g_vcode
+
+    def set_vcode(self,vcode):
+        self.vcode = vcode
+
+    def add_teacher(self, username, realname, subjectid, classlist, phonenumber, email,idcardnumber,tidSaveName=None):
+
+        classlist = str(classlist)
+        newClassList = [{'id': oneid} for oneid in classlist.split(',') if oneid!='']
+
+        payload = {
+                'vcode': self.vcode,
+                'action': 'add',
+                "username": username,
+                "realname": realname,
+                "subjectid": int(subjectid),
+                "classlist": newClassList,
+                "phonenumber": int(phonenumber),
+                "email": email,
+                "idcardnumber": int(idcardnumber)
+            }
+
+        response = requests.post(self.URL,data=payload)
+
+        bodyDict = response.json()
+
+        if tidSaveName:
+            BuiltIn().set_global_variable('${%s}' % tidSaveName, bodyDict['id'])
+
+        pprint (bodyDict,indent=2)
+        return bodyDict
+
+    #教师列表
+    def list_teacher(self,subjectid=None):
+
+        if subjectid != None:
+            params = {
+                'vcode':self.vcode,
+                'action':'search_with_pagenation',
+                'subjectid':int(subjectid)
+            }
+        else:
+            params = {
+                'vcode':self.vcode,
+                'action':'search_with_pagenation'
+            }
+
+        response = requests.get(self.URL,params=params)
+
+        bodyDict = response.json()
+        pprint (bodyDict,indent=2)
+        return bodyDict
+
+    #修改教师
+    def modify_teacher(self):
+        payload = {
+
+        }
+
+        response = requests.put
+
+    #删除单个教师
+    def delete_teacher(self,tid):
+        payload = {
+            'vcode'  : self.vcode,
+        }
+
+        url = '{}/{}'.format(self.URL,tid)
+
+        response = requests.delete(url,data=payload)
+
+        return response.json()
+
+    #删除全部教师
+    def delete_all_teacher(self):
+        # 先列出所有班级
+        rd = self.list_teacher()
+        pprint(rd, indent=2)
+
+        # 删除列出的教师
+        if rd['retlist'] != []:
+            for one in rd['retlist']:
+             self.delete_school_class(one['id'])
+
+        # 再列出七年级所有班级
+        rd = self.list_teacher()
+        pprint(rd, indent=2)
+
+        # 如果没有删除干净，通过异常报错给RF
+        if rd['retlist'] != []:
+            raise Exception("cannot delete all school classes!!")
+
+    def teacherlist_should_contain(self, teacherlist,username, realname, subjectid, classlist, phonenumber, email,idcardnumber,):
+
+        item = {
+            "username": username,
+            "realname": realname,
+            "subjectid": subjectid,
+            "classlist": newClassList,
+            "phonenumber": phonenumber,
+            "email": email,
+            "idcardnumber": idcardnumber
+            }
+
+        if item not in teacherlist:
+            raise Exception("教师列表里没有该教师！")
